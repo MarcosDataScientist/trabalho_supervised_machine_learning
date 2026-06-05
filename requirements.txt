@@ -1,0 +1,35 @@
+
+# Instalacao: pip install -r requirements.txt
+
+# Analise de sentimento B2W - dependencias do projeto
+# Python 3.10 ou 3.11 recomendado
+#
+# Instalacao:
+#   conda create -n sentimentos python=3.10 -y
+#   conda activate sentimentos
+#   pip install -r requirements.txt
+#
+# Primeira execucao do notebook (stopwords em portugues):
+#   python -c "import nltk; nltk.download('stopwords')"
+#
+# Dados: colocar na pasta do projeto
+#   B2W-Reviews01 - B2W-Reviews01.csv
+
+# Etapa 1 - baseline (TF-IDF + regressao logistica)
+pandas>=2.0.0,<3.0.0
+numpy>=1.24.0,<2.0.0
+scikit-learn>=1.3.0
+scipy>=1.11.0
+nltk>=3.8.0
+matplotlib>=3.7.0
+
+# Etapa 2 - DistilBERT (Hugging Face)
+torch>=2.0.0
+transformers>=4.36.0
+accelerate>=0.25.0
+safetensors>=0.4.0
+
+# Jupyter
+jupyter>=1.0.0
+ipykernel>=6.0.0
+notebook>=7.0.0

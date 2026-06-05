@@ -1,0 +1,10 @@
+B2W-Reviews01 - B2W-Reviews01.csv
+B2W-Reviews01.xlsx
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+env/
+*.pyc
+.DS_Store
+results/
+checkpoint-*/
