@@ -25,6 +25,7 @@ matplotlib>=3.7.0
 
 # Etapa 2 - DistilBERT (Hugging Face)
 torch>=2.0.0
+torchvision
 transformers>=4.36.0
 accelerate>=0.25.0
 safetensors>=0.4.0
