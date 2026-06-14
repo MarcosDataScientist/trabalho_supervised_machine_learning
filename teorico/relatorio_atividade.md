@@ -29,9 +29,9 @@ Foram treinados três baselines progressivos:
 
 Na etapa tradicional, a variante **título + avaliação + rating** foi a mais eficiente no conjunto de teste.
 
-### Situação 2 — Deep Learning (DistilBERT)
+### Situação 2 — Deep Learning (BERTimbau)
 
-Optamos pelo **DistilBERT multilíngue** (`distilbert/distilbert-base-multilingual-cased`) por ser cerca de **40% mais leve** que BERT completo, o que facilita fine-tuning em hardware limitado (ex.: Mac sem GPU dedicada), mantendo capacidade razoável para português.
+Optamos pelo **BERTimbau** (`neuralmind/bert-base-portuguese-cased`) por ser um modelo BERT completo treinado especificamente para o português brasileiro, o que garante maior acurácia semântica e sintática no idioma nacional, realizando o fine-tuning de forma eficiente localmente com aceleração MPS (Metal Performance Shaders) no macOS.
 
 ---
 
@@ -48,9 +48,9 @@ Colunas finais para modelagem  `review_title`, `review_text`, `overall_rating`
 1. 80% temporário / 20% **teste** (25.770 amostras)
 2. Do temporário: 80% **treino** / 20% **validação** (82.463 treino, 20.616 validação)
 
-O mesmo particionamento foi reutilizado na etapa DistilBERT, garantindo comparabilidade entre abordagens.
+O mesmo particionamento foi reutilizado na etapa BERTimbau, garantindo comparabilidade entre abordagens.
 
-**Observação (DistilBERT):** por limitação de tempo e hardware, o fine-tuning usou **5.000 amostras** amostradas estratificadamente do conjunto de treino (`N_TREINO_BERT = 5000`), enquanto o baseline TF-IDF foi treinado no treino completo (~82k). Essa diferença deve ser considerada na interpretação dos resultados.
+**Observação (BERTimbau):** por limitação de tempo e hardware, o fine-tuning usou **5.000 amostras** amostradas estratificadamente do conjunto de treino (`N_TREINO_BERT = 5000`), enquanto o baseline TF-IDF foi treinado no treino completo (~82k). Essa diferença deve ser considerada na interpretação dos resultados.
 
 ---
 
@@ -77,12 +77,12 @@ Agregação título + texto  `review_plus_title = título + " " + texto`  Títul
 
 **Aviso observado na execução:** o sklearn alertou que algumas stopwords portuguesas (ex.: “não”, “só”) podem ser tokenizadas de forma inconsistente. Isso reforça que remover “não” como stopword pode **prejudicar** a detecção de negação — um ponto relevante na análise de erros.
 
-### 3.3 Abordagem DistilBERT — o que **não** deve ser replicado do pipeline tradicional
+### 3.3 Abordagem BERTimbau — o que **não** deve ser replicado do pipeline tradicional
 
 Etapa tradicional  Por que **evitar** no BERT 
 
  Remoção de stopwords  O tokenizador WordPiece precisa da sequência original; stopwords ajudam na estrutura sintática 
- Lowercasing manual agressivo  O modelo usado é **cased** (`distilbert-base-multilingual-cased`); maiúsculas podem carregar ênfase 
+ Lowercasing manual agressivo  O modelo usado é **cased** (`neuralmind/bert-base-portuguese-cased`); maiúsculas podem carregar ênfase 
  Remoção de pontuação  Pontuação pode sinalizar ironia, exclamação, hesitação |
  Stemming / lematização  Destrói forma superficial que o pré-treinamento aprendeu a explorar 
  TF-IDF antes do modelo  O Transformer aprende representações contextuais; a entrada deve ser **texto bruto** tokenizado 
@@ -108,10 +108,10 @@ Matriz de confusão — **título + review** (comparável ao texto do BERT):
  [  797 18184]]
 ```
 
-### 4.2 DistilBERT — TESTE (resultado obtido na execução)
+### 4.2 BERTimbau — TESTE (resultado obtido na execução)
 
 ```
-==== DISTILBERT - TESTE ====
+==== BERTIMBAU - TESTE ====
               precision    recall  f1-score   support
 
            0       0.85      0.86      0.86      6789
@@ -127,12 +127,12 @@ weighted avg       0.92      0.92      0.92     25770
 Acurácia: 0.9235157159487777
 ```
 
-**Sim — a acurácia em teste do DistilBERT foi encontrada e está correta:** **92,35%** no mesmo conjunto de teste (25.770 avaliações), com desempenho forte na classe positiva (F1 ≈ 0,95) e recall da classe negativa (~0,86) superior ao baseline “só review” (recall ≈ 0,80), porém ligeiramente abaixo do baseline “título + review” em acurácia global (93,02%).
+**Sim — a acurácia em teste do BERTimbau foi encontrada e está correta:** **92,35%** no mesmo conjunto de teste (25.770 avaliações), com desempenho forte na classe positiva (F1 ≈ 0,95) e recall da classe negativa (~0,86) superior ao baseline “só review” (recall ≈ 0,80), porém ligeiramente abaixo do baseline “título + review” em acurácia global (93,02%).
 
 ### 4.3 Leitura comparativa honesta
 
-DistilBERT vs TF-IDF **título + review**  Acurácias muito próximas (92,35% vs 93,02%); empate técnico com leve vantagem do baseline nesta execução 
-DistilBERT vs TF-IDF **+ rating**  O baseline com rating (95,6%) supera o BERT, pois usa sinal numérico explícito que o Transformer não recebeu 
+BERTimbau vs TF-IDF **título + review**  Acurácias muito próximas (92,35% vs 93,02%); empate técnico com leve vantagem do baseline nesta execução 
+BERTimbau vs TF-IDF **+ rating**  O baseline com rating (95,6%) supera o BERT, pois usa sinal numérico explícito que o Transformer não recebeu 
 Custo computacional  BERT: fine-tuning com 5k amostras, 2 épocas; baseline: treino completo, inferência muito mais rápida 
 Generalização linguística  O BERT tende a capturar melhor contexto (negação, ironia); o TF-IDF depende de n-grams e pode confundir polaridade 
 
@@ -191,20 +191,20 @@ Os exemplos abaixo foram selecionados no dataset B2W por **padrões linguístico
 
 ## 6. Overfitting e validação (baseline)
 
-No gráfico do notebook, a diferença entre acurácia de treino e validação no melhor modelo textual ficou em torno de **0,46 p.p.**, indicando **pouco overfitting** para TF-IDF + regressão logística nesta configuração. O DistilBERT deve ser monitorado pela curva de loss/accuracy em validação durante as épocas (2 épocas configuradas).
+No gráfico do notebook, a diferença entre acurácia de treino e validação no melhor modelo textual ficou em torno de **0,46 p.p.**, indicando **pouco overfitting** para TF-IDF + regressão logística nesta configuração. O BERTimbau deve ser monitorado pela curva de loss/accuracy em validação durante as épocas (2 épocas configuradas).
 
 
 ## 7. Conclusões
 
-1. **Objetivo cumprido:** Foi implementada e avaliada uma solução completa em Jupyter, com baseline TF-IDF (três variantes) e fine-tuning DistilBERT no mesmo split de teste.
+1. **Objetivo cumprido:** Foi implementada e avaliada uma solução completa em Jupyter, com baseline TF-IDF (três variantes) e fine-tuning BERTimbau no mesmo split de teste.
 
-2. **Métricas obrigatórias:** Matriz de confusão, precision, recall, F1 e acurácia foram obtidas no **teste** para ambas as abordagens. A acurácia do DistilBERT em teste é **92,35%**, conforme a saída reportada.
+2. **Métricas obrigatórias:** Matriz de confusão, precision, recall, F1 e acurácia foram obtidas no **teste** para ambas as abordagens. A acurácia do BERTimbau em teste é **92,35%**, conforme a saída reportada.
 
 3. **Pré-processamento:** A limpeza agressiva (stopwords, lowercasing, remoção de acentos) é adequada ao vocabulário estático do TF-IDF, mas **não deve ser replicada** no pipeline do BERT, que depende de tokenização e contexto preservados.
 
-4. **Comparação:** Com apenas texto (título + review), DistilBERT e o melhor baseline textual ficam **equivalentes** (~92–93%), com vantagem do baseline quando se inclui **rating** (95,6%). O Transformer permanece relevante para casos com polaridade mista, ironia e negação escopada — cenários descritos na análise de erros.
+4. **Comparação:** Com apenas texto (título + review), BERTimbau e o melhor baseline textual ficam **equivalentes** (~92–93%), com vantagem do baseline quando se inclui **rating** (95,6%). O Transformer permanece relevante para casos com polaridade mista, ironia e negação escopada — cenários descritos na análise de erros.
 
-5. **Limitações:** Subconjunto de 5k para treino BERT; modelo multilíngue e não específico para PT-BR (BERTimbau seria alternativa futura); exemplos de erro devem ser validados no notebook com predições salvas (`pred_baseline`, `pred_bert`) para citar IDs reais na apresentação.
+5. **Limitações:** Subconjunto de 5k para treino BERT; modelo específico para PT-BR (BERTimbau); exemplos de erro devem ser validados no notebook com predições salvas (`pred_baseline`, `pred_bert`) para citar IDs reais na apresentação.
 
 6. **Próximo passo sugerido:** Célula no notebook que exporta automaticamente 3 linhas do teste com `y_true`, `pred_tfidf`, `pred_bert` e o texto — para alinhar 100% o relatório com a execução final.
 
